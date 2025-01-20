@@ -1,7 +1,7 @@
 chrome.runtime.onInstalled.addListener(() => {
     chrome.declarativeNetRequest.updateDynamicRules(
       {
-        removeRuleIds: [1], // Remove existing rules with ID 1
+        removeRuleIds: [1],
         addRules: [
           {
             id: 1,

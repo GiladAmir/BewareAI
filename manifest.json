@@ -20,6 +20,26 @@
   ],
   "background": {
     "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["images/BewereAi_logo_48.png"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "/images/BewereAi_logo_16.png",
+      "32": "/images/BewereAi_logo_32.png",
+      "48": "/images/BewereAi_logo_48.png",
+      "128": "/images/BewereAi_logo_128.png"
+    }
+  },
+  "icons": {
+    "16": "/images/BewereAi_logo_16.png",
+    "32": "/images/BewereAi_logo_32.png",
+    "48": "/images/BewereAi_logo_48.png",
+    "128": "/images/BewereAi_logo_128.png"
   }
   }
   
