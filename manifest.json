@@ -1,0 +1,25 @@
+{
+    "manifest_version": 3,
+    "name": "BewereAI Prompt Monitor",
+    "version": "1.0",
+    "description": "Monitor and block sensitive prompts sent to ChatGPT.",
+    "permissions": [
+      "declarativeNetRequest",
+      "declarativeNetRequestWithHostAccess",
+      "activeTab",
+      "scripting"
+    ],
+    "host_permissions": [
+    "*://*/*"  
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+  }
+  
