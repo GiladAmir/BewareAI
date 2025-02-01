@@ -29,7 +29,6 @@ const createPopup = () => {
   popup.style.flexDirection = "column";
   popup.style.alignItems = "center";
 
-  // Navbar with Logo
   const navbar = document.createElement("div");
   navbar.style.width = "100%";
   navbar.style.height = "50px";
@@ -37,13 +36,29 @@ const createPopup = () => {
   navbar.style.display = "flex";
   navbar.style.alignItems = "center";
   navbar.style.justifyContent = "center";
-
+  
+  const logoContainer = document.createElement("div");
+  logoContainer.style.display = "flex";
+  logoContainer.style.alignItems = "center";
+  
+  // Logo image
   const logo = document.createElement("img");
-  logo.src = "./images/BewereAi_logo_48.png"; // Replace with actual logo URL
-  logo.alt = "Company Logo";
-  logo.style.height = "30px";
-
-  navbar.appendChild(logo);
+  logo.src = chrome.runtime.getURL("images/BewereAi_logo_48.png"); // Updated path using chrome.runtime.getURL
+  logo.alt = "BewereAI";
+  logo.style.height = "30px";  
+  
+  // Logo text
+  const logoText = document.createElement("span");
+  logoText.textContent = "BewereAI";
+  logoText.style.fontSize = "18px";
+  logoText.style.color = "white";
+  logoText.style.marginLeft = "10px"; // Space between the logo and text
+  logoText.style.fontWeight = "bold";
+  
+  logoContainer.appendChild(logo);
+  logoContainer.appendChild(logoText);
+  navbar.appendChild(logoContainer);
+  
   popup.appendChild(navbar);
 
   // Status Message
@@ -156,8 +171,8 @@ const createPopup = () => {
   forceSendButton.textContent = "Force Send";
   forceSendButton.style.padding = "8px 12px";
   forceSendButton.style.border = "none";
-  forceSendButton.style.backgroundColor = "#2ecc71";
-  forceSendButton.style.color = "white";
+  forceSendButton.style.backgroundColor = "yellow";
+  forceSendButton.style.color = "black";
   forceSendButton.style.cursor = "pointer";
   forceSendButton.style.borderRadius = "4px";
 
