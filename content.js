@@ -7,6 +7,7 @@ if (window.location.hostname === "chat.openai.com") {
 let sendButton = null;
 let popup = null;
 let forceSendTriggered = false;
+let isOriginalTextActive = true; // Default state: "Original Text" is selected
 
 const createPopup = () => {
   if (popup) return;
@@ -17,45 +18,128 @@ const createPopup = () => {
   popup.style.top = "50%";
   popup.style.left = "50%";
   popup.style.transform = "translate(-50%, -50%)";
-  popup.style.backgroundColor = "rgba(0, 0, 0, 0.9)";
-  popup.style.color = "white";
-  popup.style.padding = "20px";
+  popup.style.backgroundColor = "white";
+  popup.style.color = "#333";
+  popup.style.padding = "15px";
   popup.style.borderRadius = "8px";
-  popup.style.fontSize = "16px";
-  popup.style.zIndex = "9999";
-  popup.style.textAlign = "center";
-  popup.style.maxWidth = "350px";
   popup.style.boxShadow = "0px 4px 15px rgba(0, 0, 0, 0.5)";
+  popup.style.zIndex = "9999";
+  popup.style.width = "320px";
   popup.style.display = "flex";
-  popup.style.alignItems = "flex-start";
-  popup.style.gap = "15px";
+  popup.style.flexDirection = "column";
+  popup.style.alignItems = "center";
+
+  // Navbar with Logo
+  const navbar = document.createElement("div");
+  navbar.style.width = "100%";
+  navbar.style.height = "50px";
+  navbar.style.backgroundColor = "#2c3e50";
+  navbar.style.display = "flex";
+  navbar.style.alignItems = "center";
+  navbar.style.justifyContent = "center";
 
   const logo = document.createElement("img");
-  logo.src = chrome.runtime.getURL("images/BewereAi_logo_48.png");
-  logo.style.width = "48px";
-  logo.style.height = "48px";
-  logo.style.flexShrink = "0";
-  logo.style.marginTop = "0";
-  logo.style.marginLeft = "0";
-  popup.appendChild(logo);
+  logo.src = "./images/BewereAi_logo_48.png"; // Replace with actual logo URL
+  logo.alt = "Company Logo";
+  logo.style.height = "30px";
 
-  const content = document.createElement("div");
-  content.style.flex = "1";
-  content.style.marginLeft = "10px";
+  navbar.appendChild(logo);
+  popup.appendChild(navbar);
 
-  const message = document.createElement("p");
-  message.textContent = "This action is blocked for security reasons.";
-  message.style.margin = "0 0 15px";
-  content.appendChild(message);
+  // Status Message
+  const statusMessage = document.createElement("p");
+  statusMessage.textContent = "This prompt validates our security policy.";
+  statusMessage.style.textAlign = "center";
+  statusMessage.style.margin = "10px";
+  popup.appendChild(statusMessage);
 
-  const buttonContainer = document.createElement("div");
-  buttonContainer.style.display = "flex";
-  buttonContainer.style.justifyContent = "center";
-  buttonContainer.style.gap = "10px";
+  // Toggle Button Row
+  const toggleContainer = document.createElement("div");
+  toggleContainer.style.display = "flex";
+  toggleContainer.style.justifyContent = "center";
+  toggleContainer.style.gap = "10px";
+  toggleContainer.style.width = "100%";
+  toggleContainer.style.marginBottom = "10px";
 
+  const originalButton = document.createElement("button");
+  originalButton.textContent = "Original Text";
+  originalButton.style.padding = "8px 12px";
+  originalButton.style.border = "1px solid #3498db";
+  originalButton.style.cursor = "pointer";
+  originalButton.style.borderRadius = "4px";
+  originalButton.style.backgroundColor = "#3498db";
+  originalButton.style.color = "white";
+  originalButton.style.fontWeight = "bold"; // Default active button
+
+  const redactButton = document.createElement("button");
+  redactButton.textContent = "Content Redaction";
+  redactButton.style.padding = "8px 12px";
+  redactButton.style.border = "1px solid #e67e22";
+  redactButton.style.cursor = "pointer";
+  redactButton.style.borderRadius = "4px";
+  redactButton.style.backgroundColor = "white";
+  redactButton.style.color = "#e67e22";
+  redactButton.style.fontWeight = "normal";
+
+  // Toggle Functionality
+  const updateToggleState = (isOriginalActive) => {
+    if (isOriginalActive) {
+      originalButton.style.backgroundColor = "#3498db";
+      originalButton.style.color = "white";
+      originalButton.style.fontWeight = "bold";
+
+      redactButton.style.backgroundColor = "white";
+      redactButton.style.color = "#e67e22";
+      redactButton.style.fontWeight = "normal";
+    } else {
+      originalButton.style.backgroundColor = "white";
+      originalButton.style.color = "#3498db";
+      originalButton.style.fontWeight = "normal";
+
+      redactButton.style.backgroundColor = "#e67e22";
+      redactButton.style.color = "white";
+      redactButton.style.fontWeight = "bold";
+    }
+  };
+
+  originalButton.addEventListener("click", () => {
+    isOriginalTextActive = true;
+    updateToggleState(true);
+  });
+
+  redactButton.addEventListener("click", () => {
+    isOriginalTextActive = false;
+    updateToggleState(false);
+  });
+
+  toggleContainer.appendChild(originalButton);
+  toggleContainer.appendChild(redactButton);
+  popup.appendChild(toggleContainer);
+
+  // Prompt Display Area
+  const promptDisplay = document.createElement("div");
+  promptDisplay.style.width = "90%";
+  promptDisplay.style.height = "150px";
+  promptDisplay.style.border = "1px solid #ccc";
+  promptDisplay.style.margin = "10px";
+  promptDisplay.style.padding = "10px";
+  promptDisplay.style.overflowY = "auto";
+  promptDisplay.style.background = "#f9f9f9";
+  promptDisplay.setAttribute("contenteditable", "true");
+  popup.appendChild(promptDisplay);
+
+  // Bottom Button Container
+  const bottomButtonContainer = document.createElement("div");
+  bottomButtonContainer.style.display = "flex";
+  bottomButtonContainer.style.justifyContent = "center";
+  bottomButtonContainer.style.gap = "15px";
+  bottomButtonContainer.style.marginTop = "10px";
+  bottomButtonContainer.style.width = "100%";
+
+  // Close Button (on the left)
   const closeButton = document.createElement("button");
   closeButton.textContent = "Close";
-  closeButton.style.padding = "10px 15px";
+  closeButton.style.padding = "8px 12px";
   closeButton.style.border = "none";
   closeButton.style.backgroundColor = "red";
   closeButton.style.color = "white";
@@ -67,27 +151,26 @@ const createPopup = () => {
     popup = null;
   });
 
-  const forceButton = document.createElement("button");
-  forceButton.textContent = "Force Send";
-  forceButton.style.padding = "10px 15px";
-  forceButton.style.border = "none";
-  forceButton.style.backgroundColor = "yellow";
-  forceButton.style.color = "black";
-  forceButton.style.cursor = "pointer";
-  forceButton.style.borderRadius = "4px";
+  // Force Send Button (on the right)
+  const forceSendButton = document.createElement("button");
+  forceSendButton.textContent = "Force Send";
+  forceSendButton.style.padding = "8px 12px";
+  forceSendButton.style.border = "none";
+  forceSendButton.style.backgroundColor = "#2ecc71";
+  forceSendButton.style.color = "white";
+  forceSendButton.style.cursor = "pointer";
+  forceSendButton.style.borderRadius = "4px";
 
-  forceButton.addEventListener("click", () => {
-    popup.remove();
-    popup = null;
-
+  forceSendButton.addEventListener("click", () => {
     forceSendTriggered = true;
     sendMessage();
+    popup.remove();
+    popup = null;
   });
 
-  buttonContainer.appendChild(closeButton);
-  buttonContainer.appendChild(forceButton);
-  content.appendChild(buttonContainer);
-  popup.appendChild(content);
+  bottomButtonContainer.appendChild(closeButton);
+  bottomButtonContainer.appendChild(forceSendButton);
+  popup.appendChild(bottomButtonContainer);
 
   document.body.appendChild(popup);
 };
@@ -97,9 +180,7 @@ const attachValidation = () => {
 
   if (sendButton) {
     console.log("Send button found!");
-
     sendButton.removeEventListener("click", sendButtonClickHandler);
-
     sendButton.addEventListener("click", sendButtonClickHandler);
   } else {
     console.log("Send button not found.");
@@ -110,10 +191,8 @@ const sendButtonClickHandler = (event) => {
   console.log("Send button clicked.");
   
   if (!forceSendTriggered) {
-
     event.preventDefault();
     event.stopImmediatePropagation();
-
     if (!popup) {
       createPopup();
     }
