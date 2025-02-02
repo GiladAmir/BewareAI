@@ -1,6 +1,6 @@
 console.log("Content script has been injected into chat.openai.com.");
 
-if (window.location.hostname === "chat.openai.com") {
+if (window.location.hostname === "chatgpt.com") {
   console.log("We are on the correct domain (chat.openai.com).");
 }
 
