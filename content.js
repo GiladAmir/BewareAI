@@ -204,12 +204,36 @@ const attachValidation = () => {
 
 const sendButtonClickHandler = (event) => {
   console.log("Send button clicked.");
-  
+
   if (!forceSendTriggered) {
     event.preventDefault();
     event.stopImmediatePropagation();
-    if (!popup) {
-      createPopup();
+
+    // Capture the text from the prompt input
+    const promptTextarea = document.querySelector("#prompt-textarea");
+    if (promptTextarea) {
+      const promptDisplayText = promptTextarea.innerText.trim(); // Extract plain text
+
+      if (promptDisplayText === "") {
+        console.warn("Prompt is empty.");
+      } else {
+        console.log("Captured prompt:", promptDisplayText);
+      }
+
+      // Ensure popup is created before inserting text
+      if (!popup) {
+        createPopup();
+      }
+
+      // Insert text into the popup window's promptDisplay element
+      const promptDisplay = document.querySelector("#custom-popup div[contenteditable='true']");
+      if (promptDisplay) {
+        promptDisplay.innerText = promptDisplayText; // Insert the captured text
+      } else {
+        console.error("Prompt display element not found in popup.");
+      }
+    } else {
+      console.error("Prompt textarea not found.");
     }
   } else {
     forceSendTriggered = false;
