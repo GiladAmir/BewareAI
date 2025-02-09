@@ -137,6 +137,7 @@ const createPopup = () => {
 
   // Prompt Display Area
   const promptDisplay = document.createElement("div");
+  promptDisplay.textContent = originalPromptText
   promptDisplay.style.width = "90%";
   promptDisplay.style.height = "150px";
   promptDisplay.style.border = "1px solid #ccc";
@@ -182,10 +183,12 @@ const createPopup = () => {
 
   forceSendButton.addEventListener("click", () => {
     forceSendTriggered = true;
-    sendMessage();
+    sendMessage(); // Ensure the send button is still being tracked
+    forceSendTriggered = false; // Reset after sending
     popup.remove();
     popup = null;
   });
+  
 
   bottomButtonContainer.appendChild(closeButton);
   bottomButtonContainer.appendChild(forceSendButton);
@@ -199,19 +202,24 @@ const redactText = () => {
   if (jsonResponse && jsonResponse.violating_prompt_text) {
     const promptDisplay = document.querySelector("#custom-popup div[contenteditable=true]");
     if (promptDisplay) {
-      const redactedText = promptDisplay.innerHTML.replace(
+      const redactedText = promptDisplay.innerText.replace(
         jsonResponse.violating_prompt_text,
-        "######"
+        "#".repeat(jsonResponse.violating_prompt_text.length)
       );
-      promptDisplay.innerHTML = redactedText;
+      promptDisplay.innerText = redactedText;
     }
   }
 };
 
 const sendMessage = () => {
+  sendButton = document.querySelector("button[data-testid='send-button']"); // Re-fetch the button each time
   if (sendButton) {
-    console.log("Force sending the message...");
-    sendButton.click();
+    console.log("Send button found!");
+    // Ensure the event listener is only attached once
+    sendButton.removeEventListener("click", sendButtonClickHandler);
+    sendButton.addEventListener("click", sendButtonClickHandler);
+  } else {
+    console.log("Send button not found.");
   }
 };
 
@@ -222,7 +230,6 @@ const restoreOriginalText = () => {
     promptDisplay.innerHTML = originalPromptText;
   }
 };
-
 
 const sendPromptToServer = async (prompt) => {
   try {
@@ -243,9 +250,8 @@ const sendPromptToServer = async (prompt) => {
     const data = await response.json();
     console.log("✅ Response from server:", data);
 
-    jsonResponse = data; // Store response
-
-    return data; // Return the response if needed elsewhere
+    jsonResponse = JSON.parse(data.response); // Store response
+    return jsonResponse; // Return the response if needed elsewhere
   } catch (error) {
     console.error("❌ Error sending prompt to server:", error);
     return null; // Return null if there was an error
@@ -268,13 +274,14 @@ const sendButtonClickHandler = async (event) => {
         console.log("Captured Prompt:", promptMessage);
         originalPromptText = promptMessage; // Save original prompt text
         const serverResponse = await sendPromptToServer(promptMessage); // Send prompt to the server and wait for the response
-
+        console.log("RECEIVED SERVER RESPONSE - ", serverResponse)
         // If server's answer is true, show the popup
         if (serverResponse && serverResponse.answer === true) {
+          console.log("Violation found, showing popup.");
           createPopup(); // Show the popup
         } else {
           console.log("Prompt is allowed. Sending to ChatGPT.");
-          sendMessage(); // Allow request to be sent if answer is false
+          sendMessage();
         }
       } else {
         console.log("No prompt text detected.");
@@ -286,24 +293,18 @@ const sendButtonClickHandler = async (event) => {
 };
 
 const attachValidation = () => {
-  // Find the send button
-  const sendButton = document.querySelector('[data-testid="send-button"][aria-label="Send prompt"].flex.bg-black');
+  sendButton = document.querySelector('[data-testid="send-button"][aria-label="Send prompt"].flex.bg-black');
 
   if (sendButton) {
     console.log("Send button found!");
-    // Remove previous event listener to prevent duplicates
     sendButton.removeEventListener("click", sendButtonClickHandler);
-    // Attach the event listener
     sendButton.addEventListener("click", sendButtonClickHandler);
   } else {
     console.log("Send button not found.");
   }
 };
 
-// Call attachValidation initially or whenever the page content changes
 attachValidation();
-
-// Optionally, observe changes to the page to re-attach the listener if needed
 const observer = new MutationObserver(() => {
   attachValidation();
 });
