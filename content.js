@@ -181,14 +181,15 @@ const createPopup = () => {
   forceSendButton.style.cursor = "pointer";
   forceSendButton.style.borderRadius = "4px";
 
-  forceSendButton.addEventListener("click", () => {
+  forceSendButton.addEventListener("click", async () => {
     forceSendTriggered = true;
-    sendMessage(); // Ensure the send button is still being tracked
-    forceSendTriggered = false; // Reset after sending
+    if (sendButton) {
+      sendButton.click();
+    }
+    forceSendTriggered = false;
     popup.remove();
     popup = null;
   });
-  
 
   bottomButtonContainer.appendChild(closeButton);
   bottomButtonContainer.appendChild(forceSendButton);
@@ -211,15 +212,19 @@ const redactText = () => {
   }
 };
 
-const sendMessage = () => {
-  sendButton = document.querySelector("button[data-testid='send-button']"); // Re-fetch the button each time
-  if (sendButton) {
-    console.log("Send button found!");
-    // Ensure the event listener is only attached once
-    sendButton.removeEventListener("click", sendButtonClickHandler);
-    sendButton.addEventListener("click", sendButtonClickHandler);
-  } else {
-    console.log("Send button not found.");
+const sendMessage = async () => {
+  try {
+    sendButton = document.querySelector("button[data-testid='send-button']"); // Re-fetch the button each time
+    if (sendButton) {
+      console.log("Send button found!");
+      // Ensure the event listener is only attached once
+      sendButton.removeEventListener("click", sendButtonClickHandler);
+      sendButton.addEventListener("click", sendButtonClickHandler);
+    } else {
+      console.log("Send button not found.");
+    }
+  } catch (error) {
+    console.error("Error in sendMessage:", error);
   }
 };
 
@@ -281,7 +286,11 @@ const sendButtonClickHandler = async (event) => {
           createPopup(); // Show the popup
         } else {
           console.log("Prompt is allowed. Sending to ChatGPT.");
-          sendMessage();
+          forceSendTriggered = true;
+          if (sendButton) {
+            sendButton.click();
+          }
+          forceSendTriggered = false;
         }
       } else {
         console.log("No prompt text detected.");
