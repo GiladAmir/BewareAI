@@ -1,4 +1,4 @@
-console.log("Content script has been injected into chat.openai.com.");
+console.log("Content script has been injected into ", window.location.hostname);
 
 if (window.location.hostname === "chatgpt.com") {
   console.log("We are on the correct domain (chat.openai.com).");
@@ -8,6 +8,8 @@ let sendButton = null;
 let popup = null;
 let forceSendTriggered = false;
 let isOriginalTextActive = true; // Default state: "Original Text" is selected
+let originalPromptText = ""; // Store original prompt text
+let jsonResponse = null; // Store the response from the server
 
 const createPopup = () => {
   if (popup) return;
@@ -120,11 +122,13 @@ const createPopup = () => {
   originalButton.addEventListener("click", () => {
     isOriginalTextActive = true;
     updateToggleState(true);
+    restoreOriginalText();
   });
 
   redactButton.addEventListener("click", () => {
     isOriginalTextActive = false;
     updateToggleState(false);
+    redactText();
   });
 
   toggleContainer.appendChild(originalButton);
@@ -190,53 +194,17 @@ const createPopup = () => {
   document.body.appendChild(popup);
 };
 
-const attachValidation = () => {
-  sendButton = document.querySelector('[data-testid="send-button"][aria-label="Send prompt"].flex.bg-black');
-
-  if (sendButton) {
-    console.log("Send button found!");
-    sendButton.removeEventListener("click", sendButtonClickHandler);
-    sendButton.addEventListener("click", sendButtonClickHandler);
-  } else {
-    console.log("Send button not found.");
-  }
-};
-
-const sendButtonClickHandler = (event) => {
-  console.log("Send button clicked.");
-
-  if (!forceSendTriggered) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    // Capture the text from the prompt input
-    const promptTextarea = document.querySelector("#prompt-textarea");
-    if (promptTextarea) {
-      const promptDisplayText = promptTextarea.innerText.trim(); // Extract plain text
-
-      if (promptDisplayText === "") {
-        console.warn("Prompt is empty.");
-      } else {
-        console.log("Captured prompt:", promptDisplayText);
-      }
-
-      // Ensure popup is created before inserting text
-      if (!popup) {
-        createPopup();
-      }
-
-      // Insert text into the popup window's promptDisplay element
-      const promptDisplay = document.querySelector("#custom-popup div[contenteditable='true']");
-      if (promptDisplay) {
-        promptDisplay.innerText = promptDisplayText; // Insert the captured text
-      } else {
-        console.error("Prompt display element not found in popup.");
-      }
-    } else {
-      console.error("Prompt textarea not found.");
+// Redact the text based on the violating part from the response
+const redactText = () => {
+  if (jsonResponse && jsonResponse.violating_prompt_text) {
+    const promptDisplay = document.querySelector("#custom-popup div[contenteditable=true]");
+    if (promptDisplay) {
+      const redactedText = promptDisplay.innerHTML.replace(
+        jsonResponse.violating_prompt_text,
+        "######"
+      );
+      promptDisplay.innerHTML = redactedText;
     }
-  } else {
-    forceSendTriggered = false;
   }
 };
 
@@ -247,9 +215,97 @@ const sendMessage = () => {
   }
 };
 
+// Restore the original prompt text
+const restoreOriginalText = () => {
+  const promptDisplay = document.querySelector("#custom-popup div[contenteditable=true]");
+  if (promptDisplay && originalPromptText) {
+    promptDisplay.innerHTML = originalPromptText;
+  }
+};
+
+
+const sendPromptToServer = async (prompt) => {
+  try {
+    console.log("Sending prompt to server...");
+
+    const response = await fetch("http://localhost:8000/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("✅ Response from server:", data);
+
+    jsonResponse = data; // Store response
+
+    return data; // Return the response if needed elsewhere
+  } catch (error) {
+    console.error("❌ Error sending prompt to server:", error);
+    return null; // Return null if there was an error
+  }
+};
+
+const sendButtonClickHandler = async (event) => {
+  console.log("Send button clicked.");
+
+  if (!forceSendTriggered) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    // Capture the text from the prompt input
+    const promptTextarea = document.querySelector("#prompt-textarea");
+    if (promptTextarea) {
+      const promptMessage = promptTextarea.innerText.trim(); // Extract plain text
+
+      if (promptMessage) {
+        console.log("Captured Prompt:", promptMessage);
+        originalPromptText = promptMessage; // Save original prompt text
+        const serverResponse = await sendPromptToServer(promptMessage); // Send prompt to the server and wait for the response
+
+        // If server's answer is true, show the popup
+        if (serverResponse && serverResponse.answer === true) {
+          createPopup(); // Show the popup
+        } else {
+          console.log("Prompt is allowed. Sending to ChatGPT.");
+          sendMessage(); // Allow request to be sent if answer is false
+        }
+      } else {
+        console.log("No prompt text detected.");
+      }
+    } else {
+      console.log("Prompt textarea not found.");
+    }
+  }
+};
+
+const attachValidation = () => {
+  // Find the send button
+  const sendButton = document.querySelector('[data-testid="send-button"][aria-label="Send prompt"].flex.bg-black');
+
+  if (sendButton) {
+    console.log("Send button found!");
+    // Remove previous event listener to prevent duplicates
+    sendButton.removeEventListener("click", sendButtonClickHandler);
+    // Attach the event listener
+    sendButton.addEventListener("click", sendButtonClickHandler);
+  } else {
+    console.log("Send button not found.");
+  }
+};
+
+// Call attachValidation initially or whenever the page content changes
+attachValidation();
+
+// Optionally, observe changes to the page to re-attach the listener if needed
 const observer = new MutationObserver(() => {
-  console.log("MutationObserver triggered.");
   attachValidation();
 });
-
 observer.observe(document.body, { childList: true, subtree: true });
+

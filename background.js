@@ -10,7 +10,7 @@ chrome.runtime.onInstalled.addListener(() => {
               type: "block"
             },
             condition: {
-              urlFilter: "*://chat.openai.com/*",
+              urlFilter: "*://chatgpt.com//*",
               resourceTypes: ["xmlhttprequest", "sub_frame"]
             }
           }

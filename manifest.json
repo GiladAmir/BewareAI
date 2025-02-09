@@ -1,20 +1,20 @@
 {
-    "manifest_version": 3,
-    "name": "BewereAI Prompt Monitor",
-    "version": "1.0",
-    "description": "Monitor and block sensitive prompts sent to ChatGPT.",
-    "permissions": [
-      "declarativeNetRequest",
-      "declarativeNetRequestWithHostAccess",
-      "activeTab",
-      "scripting"
-    ],
-    "host_permissions": [
-    "*://*/*"  
+  "manifest_version": 3,
+  "name": "BewereAI Prompt Monitor",
+  "version": "1.0",
+  "description": "Monitor and block sensitive prompts sent to ChatGPT.",
+  "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*"
   ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["https://chatgpt.com/*"],
       "js": ["content.js"]
     }
   ],
@@ -24,7 +24,7 @@
   "web_accessible_resources": [
     {
       "resources": ["images/BewereAi_logo_48.png"],
-      "matches": ["<all_urls>"]
+      "matches": ["https://chatgpt.com/*"]
     }
   ],
   "action": {
@@ -41,5 +41,4 @@
     "48": "/images/BewereAi_logo_48.png",
     "128": "/images/BewereAi_logo_128.png"
   }
-  }
-  
+}
