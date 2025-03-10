@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![BewereAI Logo](/Frontend/public/images/BewereAi_logo_128.png)
+![BewereAI Logo](/images/BewereAi_logo_128.png)
 
 An AI-powered content analysis system with a Chrome extension for enhancing ChatGPT interactions.
 
